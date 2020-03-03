@@ -6,13 +6,15 @@ import {
   Link
 } from "react-router-dom";
 
-interface LabelledValue {
-  label: string;
-}
-
 
 
 export default function App() {
+  enum flag {
+    success,
+    error
+  }
+  console.log(flag.success)
+
   return (
     <Router>
       <div>

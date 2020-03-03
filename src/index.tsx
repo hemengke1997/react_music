@@ -3,7 +3,7 @@ import 'react-app-polyfill/stable';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import 'normalize.css';
+import 'normalize.css'; // 重置css
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
