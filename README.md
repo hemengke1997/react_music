@@ -12,9 +12,9 @@
 
 实现了项目之后，截图会放在最后。
 
+### 准备知识
 
-
-#### create-react-app
+####1.create-react-app
 
 ##### 1. 安装
 
@@ -651,68 +651,461 @@ REACT_APP_BAR=$DOMAIN/bar
 
 
 
+#### 2. [react-router-dom](https://reacttraining.com/react-router)
+
+- <BrowserRouter> 跟 <HashRouter>的区别
+
+  两者的区别在于它们怎么存储URL以及怎么跟服务器交流
+
+  - <BrowserRouter>使用普通的URL路径，这种路径看起来很舒服，但是需要服务器正确配置。特别地，你的web服务器需要在所有由ReactRouter管理的客户端URL上都提供相同的页面，`create-react-app` 在开发环境上对这种模式提供了开箱即用的支持，但是在生产环境下需要服务器配置。
+  - <HashRouter>，跟就vue中的history: hash，一样。URL上会出现`#`这个符号。不需要服务器做任何配置。
+
+  如果要使用路由功能，确保dom的根节点包含在了路由中， 如：
+
+  ```react
+  import React from "react";
+  import ReactDOM from "react-dom";
+  import { BrowserRouter } from "react-router-dom";
+  
+  function App() {
+    return <h1>Hello React Router</h1>;
+  }
+  
+  ReactDOM.render(
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>,
+    document.getElementById("root")
+  );
+  ```
+
+  
+
+- <switch>跟<Route>的作用
+
+  - 如果渲染了<switch>， 它会在其子元素的<Route>中，查找跟当前URL匹配的元素，然后就渲染这个路由，并忽略其他的所有路由，所以`/`应该放在最后面。如果匹配不到的话，<Switch>组件什么都不会渲染(null)
+  - 虽然React Router确实支持在<Switch>之外渲染<Route>元素，但在5.1版本中，建议用[useRouteMatch](https://reacttraining.com/react-router/web/guides/primary-components/TODO)钩子。另外，不建议渲染一个没有路径的<Route>，而是建议使用一个钩子来访问您需要的任何变量。
+
+- 导航（路由改变者）
+
+  <Link> ：会被渲染成 <a>标签
+
+  <NavLink>： 是一种特别的Link， 可以设置当路由匹配时的Css类
+
+  <Redirect>:  重定向
+
+- [服务端渲染](https://reacttraining.com/react-router/web/guides/server-rendering)
+
+- 代码分割
+
+  也就是路由懒加载。 `()=>import(组件)`
+
+  需要`webpack`提供支持，`create-react-app` 提供了开箱即用的支持，如果没有使用脚手架，需要自行配置。配置方法：
+
+  ```shell
+  npm i @babel/plugin-syntax-dynamic-import -S
+  npm i loadable-components
+  ```
+
+  `.babelrc` 文件
+
+  ```json
+  {
+    "presets": ["@babel/preset-react"],
+    "plugins": ["@babel/plugin-syntax-dynamic-import"]
+  }
+  ```
+
+  举个例子
+
+  ```jsx
+  // loadable components这个库适用于服务端渲染
+  // 如果不用服务端渲染，可以使用React.lazy(https://zh-hans.reactjs.org/docs/code-splitting.html#reactlazy)
+  import loadable from "@loadable/component";
+  import Loading from "./Loading.js";
+  
+  const LoadableComponent = loadable(() => import("./Dashboard.js"), {
+    fallback: <Loading />
+  });
+  
+  export default class LoadableDashboard extends React.Component {
+    render() {
+      return <LoadableComponent />;
+    }
+  }
+  ```
+
+  
+
+- 路由跳转之后滚动至某个位置
+
+  `vue-router` 中也实现了类似的功能
+
+
+
+#### 3. [react-redux](https://react-redux.js.org/)
+
+跟 `vuex` 是一个道理，数据状态管理中心
+
+有几个核心概念：
+
+- Provider
+
+- connect()
+
+  redux提供了connect方法让我们去读取store中的值
+
+  connect方法接受两个参数：
+
+  - `mapStateToProps` 
+    - 当store中的值改变时调用。它接受整个store state， 返回组件需要的数据对象。
+  - `mapDispatchToProps`： 这个参数可以是对象或者函数
+    - 如果是函数，它会在组件生成的时候被调用一次。它接受 `dispatch` 作为参数，应返回一个包含所有使用 `dispatch` 的对象
+    - 如果是对象，不懂。
+
+  例子：
+
+  ```jsx
+  const mapStateToProps = (state, ownProps) => ({
+    // ... computed data from state and optionally ownProps
+  })
+  
+  const mapDispatchToProps = {
+    // ... normally is an object full of action creators
+  }
+  
+  // `connect` returns a new function that accepts the component to wrap:
+  const connectToStore = connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )
+  // and that function returns the connected, wrapper component:
+  const ConnectedComponent = connectToStore(Component)
+  
+  // We normally do both in one step, like this:
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(Component)
+  ```
+
+
+
+#### 4. [react-router-config](https://github.com/ReactTraining/react-router/tree/master/packages/react-router-config)
+
+​	这是一个集中配置路由的插件。
+
+​	Routes是一个对象，跟<Route>拥有一样的属性， 但是两者一些区别：
+
+```
++	Routes唯一接受的渲染prop是  `component`
++	使用 `routes` 这个key来描述子路由
++	开发者可以自由添加props到路由中， 然后使用在组件中的 `props.route` 来获取这些props。
++	接受`key` 这个prop，避免在路由跳转到一个相同的组件时缓存。 以前我做vue项目时遇到过这种情况，从a页面跳转到b， ab都是同一个组件，这个时候路由改变了但是页面没有发生改变，因为有缓存。如果添加了key，那么路由改变的时候，页面也会跟着改变了，避免了组件缓存。
+```
+
+​	配置例子：
+
+```javascript
+const routes = [
+  {
+    component: Root,
+    routes: [
+      {
+        path: "/",
+        exact: true,
+        component: Home
+      },
+      {
+        path: "/child/:id",
+        component: Child,
+        routes: [
+          {
+            path: "/child/:id/grand-child",
+            component: GrandChild
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+##### 
+
+#### 5. [redux](https://github.com/reduxjs/redux)
+
+​	[redux中文文档](https://www.redux.org.cn/)
+
+#### 6. [redux-thunk](https://github.com/reduxjs/redux-thunk)
+
+​	使用redux，我们只能通过`dispatch` 执行简单的同步更新。 这个中间件扩展了存储的功能并允许我们编写存储交互的异步逻辑
+
+
+
+----
+
+熟悉了上述的功能以及文档之后
+
 
 
 #### 开始踩坑
 
-1. 使用ts作为模板，创建了项目之后， `npm run start` 报错：
+##### 1.使用ts作为模板，创建了项目之后， `npm run start` 报错：
 
-   ```
-   Module not found: Can't resolve 'react-dom' in 'G:\github\react_music\src'
-   ```
+```
+Module not found: Can't resolve 'react-dom' in 'G:\github\react_music\src'
+```
 
-   但是我确实安装了`react-dom`， `package.json` 中也有依赖项， 检查 `node_modules` 中也有 `@types/react-dom` 包。
+但是我确实安装了`react-dom`， `package.json` 中也有依赖项， 检查 `node_modules` 中也有 `@types/react-dom` 包。
 
-   解决方案：
+解决方案：
 
-   `@types/react-dom` 这个包只是为 `react-dom` 提供类型定义。还是需要 `react-dom` 这个包
+`@types/react-dom` 这个包只是为 `react-dom` 提供类型定义。还是需要 `react-dom` 这个包
 
-   ```shell
-   npm i react-dom @types/react-dom -S
-   ```
+```shell
+npm i react-dom @types/react-dom -S
+```
 
-   同理，其他的包也需要装
+同理，其他的包也需要装
 
-2. 入门TS
+##### 2.入门TS
 
-   ##### [在react中使用TS](https://github.com/typescript-cheatsheets/react-typescript-cheatsheet#reacttypescript-cheatsheets)
++ [在react中使用TS](https://github.com/typescript-cheatsheets/react-typescript-cheatsheet#reacttypescript-cheatsheets)
++ [理解TS的类型声明](https://2ality.com/2018/04/type-notation-typescript.html)
++ [TS入门](https://ts.chibicode.com/todo/)
++ [TS中文文档](https://typescript.bootcss.com/basic-types.html)
 
-   ##### [理解TS的类型声明](https://2ality.com/2018/04/type-notation-typescript.html)
-
-   ##### [TS入门](https://ts.chibicode.com/todo/)
-
-   ##### [TS中文文档](https://typescript.bootcss.com/basic-types.html)
-
-   对于一个JAVA没学懂的人来说， TS入门也太难了吧，文档看得我想吐了，这不就是跟后端语言一样了吗？？
-
-   
-
-3.  项目目录构建
-
-   create-react-app官方文档提到，我们所有的js、css文件，都应该写在src文件夹下，因为默认的webpack配置只会解析src下的js和css文件。
-
-   我根据项目大概需要的几部分，分成了这样的目录
-
-   ![1583206188263](C:\Users\A\AppData\Roaming\Typora\typora-user-images\1583206188263.png)
+对于一个JAVA没学懂的人来说， TS入门也太难了吧，文档看得我想吐了，这不就是跟后端语言一样了吗？？
 
 
 
-4. 依赖是安装到`dependencies`还是`devDependencies`中?
+##### 3.项目目录构建
 
-   开发环境依赖，它里面的包只用于开发环境，不用于生产环境，这些包通常是单元测试或者打包工具等，例如gulp, grunt, webpack, moca, coffee等。
+create-react-app官方文档提到，我们所有的js、css文件，都应该写在src文件夹下，因为默认的webpack配置只会解析src下的js和css文件。
 
-   生产环境依赖，或者叫做业务依赖，这是我们最常用的依赖包管理对象，这些依赖是应用发布后正常执行时所需要的，但不包含测试时或者本地打包时所使用的包。
+我根据项目大概需要的几部分，分成了这样的目录
 
-5. reset css
+![1583206188263](C:\Users\A\AppData\Roaming\Typora\typora-user-images\1583206188263.png)
 
-   按照官方文档所说的，在`index.css` 中 `@import-normalize`，然后在`index.ts` 中 `import './index.css'` 。重置失败。
 
-   暂时没找到解决方案，我考虑用`normalize.css` 来重置css
 
-   ```shell
-   npm i normalize.css
-   ```
+##### 4.依赖是安装到`dependencies`还是`devDependencies`中?
 
-   在 `index.tsx` 中 `import 'normalize.css'`
+开发环境依赖，它里面的包只用于开发环境，不用于生产环境，这些包通常是单元测试或者打包工具等，例如gulp, grunt, webpack, moca, coffee等。
 
-   还是很想把这个问题解决，一气之下`npm run eject`， 看看webpack里面的配置是不是错了，结果。。发现配置没错。
+生产环境依赖，或者叫做业务依赖，这是我们最常用的依赖包管理对象，这些依赖是应用发布后正常执行时所需要的，但不包含测试时或者本地打包时所使用的包。
+
+##### 5.reset css
+
+按照官方文档所说的，在`index.css` 中 `@import-normalize`，然后在`index.ts` 中 `import './index.css'` 。重置失败。
+
+暂时没找到解决方案，我考虑用`normalize.css` 来重置css
+
+```shell
+npm i normalize.css
+```
+
+在 `index.tsx` 中 `import 'normalize.css'`   失败。**没有效果**。
+
+还是很想把这个问题解决，一气之下`npm run eject`， 看看webpack里面的配置是不是错了，结果。。发现配置没错。
+
+最后还是去复制了一份reset.css， 使用styled-components的createGlobalStyle创建了重置的css
+
+##### 6. 路由配置
+
+我想要的效果是进入主页后，有两个固定组件，一个路由组件，路由组件随着路由变化而变化，固定组件不变。
+
+我最开始是这样写的
+
+```tsx
+// 错误写法
+const routes: RouteConfig[] = [
+  {
+    path: "/",
+    component: Index,
+    render: () => <Redirect to={"/recommend"} />,
+    routes: [
+      {
+        path: "/recommend",
+        component: SuspenseComponent(Recommend)
+      }
+    ]
+  }
+]
+```
+
+可以看到调试工具中
+
+![1583686829591](C:\Users\A\AppData\Roaming\Typora\typora-user-images\1583686829591.png)
+
+暂时搞不懂是为什么。 
+
+后来改成了
+
+```tsx
+const routes: RouteConfig[] = [
+  {
+    path: "/",
+    component: Index,
+    routes: [
+      {
+        path: '/',
+        exact: true,
+        render: () => <Redirect to={"/recommend"} />
+      },
+      {
+        path: "/recommend",
+        component: SuspenseComponent(Recommend)
+      }
+    ]
+  }
+]
+```
+
+就可以了。
+
+##### 7. 关于vscode的检查拼写
+
+我以为是`eslint`导致的， 还专门去官网看了一遍文档，`eslint` 没有关于拼写的检查。是一个叫作 `code spell checker` 的插件的功能，它可以检查单词是否拼写正确。我觉得看着挺不舒服的，把这个插件卸载了。`eslint` 是统一风格，检查错误的。
+
+##### 8. react中的列表渲染
+
+`vue` 中是自带了 `v-for` 列表渲染，`react` 使用的 `jsx` 语法， 可以在 `jsx` 中写 js代码， 所以自己写循环就可以实现列表渲染了。 官方推荐使用 Array的map方法来实现。
+
+##### 9. 关于ajax网络请求放在哪个位置
+
+我在思考哈，如果某部分的数据，只是提供个单个组件使用，这个时候还需要放在reduex中吗？
+
+我觉得还是有必要的。首先放在redux中可以缓存，其次可以统一代码风格。把UI跟数据完全分开，也是一种设计风格。
+
+##### 10. reducer中为了使形参state不变，使用object.assign({},...)
+
+也可以使用对象扩展： `{...obj1, ...obj2}` 。也可以使用第三方库：比如[`immutable`](https://github.com/immutable-js/immutable-js), [`immer`](https://github.com/immerjs/immer) 。个人认为immer配合ts更好用一些
+
+[`immer` 中文小教程](https://github.com/ronffy/immer-tutorial)
+
+##### 11. 往子组件传值，传的值的约束是一个接口。
+
+```tsx
+<RecommendSheetList sheetList={sheetList}></RecommendSheetList>
+```
+
+其中sheetList的约束是
+
+```typescript
+interface sheetListStateInterface {
+  name: string;
+  picUrl: string;
+  id: number;
+  playCount: number;
+}
+```
+
+这时会报错。 我就把这个接口改成了type别名
+
+2020.3.10  这个问题是因为接受参数的组件没有给它的props设定一个接口或者any
+
+比如，给`RecommendSheetList` 组件中的props一个any约束，就可以解决上述的问题了，并不是因为传的值是一个接口而报错。
+
+```tsx
+const SheetList: React.FC<any> = props => {...}
+```
+
+或者
+
+```tsx
+const SheetList: React.FC = (props: any) => {...}
+```
+
+
+
+##### 12. styled-components导出伪元素的样式
+
+平时使用`styled-components` 导出样式都是用的` styled.div` 这种语法，但是伪元素没有标签，所以直接导出一个字符串就行了
+
+```typescript
+export const title_after = `
+  content: "";
+  background-color: #d33a31;
+  position: absolute;
+  width: 2px;
+  height: 16px;
+  left: 0;
+  top: 1px;
+`
+```
+
+tips： styled.css``  可以导出一个插入式。
+
+##### 13. 懒加载
+
+使用的库是[`react-lazyload` ](https://github.com/twobin/react-lazyload)。 可以懒加载图片，也可以懒加载组件，具体使用方法看文档。
+
+##### 14. npm多个命令一起执行
+
+避免每次启动项目时都要去额外启动一次接口，我把接口项目放在了这个项目中，这时需要一个命令同时启动接口和react项目。
+
+研究了一下，可以使用`&&`连接命令， 也可以使用插件。使用插件的话需要安装一个`concurrently` 包。
+
+```shell
+npm install -g concurrently
+```
+
+全局安装了，以后在其他项目中也可以使用这个插件了。
+
+使用方式
+
+```json
+"start:server": "cd NeteaseCloudMusicApi && node app.js",
+"start:react": "node scripts/start.js",
+"start": "concurrently \"npm run start:server\" \"npm run start:react\"",
+```
+
+##### 15. styled-components
+
+```tsx
+ <SongWrapper>
+    {
+      rank && (
+        <Rank red={songNeed.red} index={songNeed.index}>
+
+        </Rank>
+      )
+    }
+  </SongWrapper>
+```
+
+如上， Rank是一个styled-components，给这个组件传值时报错
+
+```
+(JSX attribute) red: any
+No overload matches this call.
+  Overload 1 of 2, '(props: Pick<Pick<Pick<DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | "title" | ... 252 more ... | "onTransitionEndCapture"> & { ...; }, "style" | ... 254 more ... | "onTransitionEndCapture"> & Partial<...>, "style" | ... 254 more ... | "onTransitionEndCapture"> & { ...; } & { ...; }): ReactElement<...>', gave the following error.
+    不能将类型“{ children: never[]; red: any; index: any; }”分配给类型“IntrinsicAttributes & Pick<Pick<Pick<DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | ... 253 more ... | "onTransitionEndCapture"> & { ...; }, "style" | ... 254 more ... | "onTransitionEndCapture"> & Partial<...>, "style" | ... 254 more ... | "onTransitionEndCapture"> & { ...; } & { ...; }”。
+      类型“IntrinsicAttributes & Pick<Pick<Pick<DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | ... 253 more ... | "onTransitionEndCapture"> & { ...; }, "style" | ... 254 more ... | "onTransitionEndCapture"> & Partial<...>, "style" | ... 254 more ... | "onTransitionEndCapture"> & { ...; } & { ...; }”上不存在属性“red”。
+  Overload 2 of 2, '(props: StyledComponentPropsWithAs<"div", any, {}, never>): ReactElement<StyledComponentPropsWithAs<"div", any, {}, never>, string | ... 1 more ... | (new (props: any) => Component<...>)>', gave the following error.
+    不能将类型“{ children: never[]; red: any; index: any; }”分配给类型“IntrinsicAttributes & Pick<Pick<Pick<DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | ... 253 more ... | "onTransitionEndCapture"> & { ...; }, "style" | ... 254 more ... | "onTransitionEndCapture"> & Partial<...>, "style" | ... 254 more ... | "onTransitionEndCapture"> & { ...; } & { ...; }”。
+      类型“IntrinsicAttributes & Pick<Pick<Pick<DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | ... 253 more ... | "onTransitionEndCapture"> & { ...; }, "style" | ... 254 more ... | "onTransitionEndCapture"> & Partial<...>, "style" | ... 254 more ... | "onTransitionEndCapture"> & { ...; } & { ...; }”上不存在属性“red”。ts(2769)
+```
+
+翻阅了官方文档解决问题。
+
+```typescript
+import styled from 'styled-components';
+import Header from './Header';
+
+interface TitleProps {
+  readonly isActive: boolean;
+};
+
+const Title = styled.h1<TitleProps>`
+  color: ${props => props.isActive ? props.theme.colors.main : props.theme.colors.secondary};
+`
+
+const NewHeader = styled(Header)<{ customColor: string }>`
+  color: ${props => props.customColor};
+`
+```
+
+需要定义泛型！！！！！！！
