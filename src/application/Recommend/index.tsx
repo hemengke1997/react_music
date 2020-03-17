@@ -3,6 +3,7 @@ import { connect } from "react-redux"
 import { RouteConfig } from "react-router-config"
 import RecommendSheetList from "./sheetList/index"
 import SongList from "./songList/index"
+import Footer from './footer'
 import Loading from "components/loading/index"
 import {
   sheetListType,
@@ -35,6 +36,7 @@ const Recommend: React.FC<RecommendProps> = props => {
     <Fragment>
       <RecommendSheetList sheetList={sheetList}></RecommendSheetList>
       <SongList sheetSongs={sheetSongs}></SongList>
+      <Footer></Footer>
       {loading.sheetLoading || loading.songLoading ? <Loading></Loading> : null}
     </Fragment>
   )

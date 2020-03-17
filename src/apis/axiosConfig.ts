@@ -1,12 +1,11 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosInstance } from "axios"
 
-export const baseURL = "http://192.168.0.104:3000"
+export const baseURL = "http://localhost:3000"
 
 class AxiosInterceptor {
   axiosInstance: AxiosInstance
   axiosConfig: AxiosRequestConfig = {
-    baseURL: baseURL,
-    timeout: 10000
+    baseURL: baseURL
   }
   constructor() {
     this.axiosInstance = this.getAxiosInstance()
