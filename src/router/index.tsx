@@ -2,11 +2,12 @@ import React, { lazy, Suspense } from "react"
 import { RouteConfig } from "react-router-config"
 import { Redirect } from "react-router-dom"
 import Index from "layout/index"
-// import BlankLayout from "layout/BlankLayout"
 
 const Recommend: React.FC = lazy(
-  (): Promise<any> => import("../application/Recommend")
+  (): Promise<any> => import("application/Recommend")
 )
+const Hot: React.FC = lazy((): Promise<any> => import("application/Hot"))
+const Search: React.FC = lazy((): Promise<any> => import("application/Search"))
 
 /**
  * React.lazy
@@ -28,13 +29,23 @@ const routes: RouteConfig[] = [
     component: Index,
     routes: [
       {
-        path: '/',
+        path: "/",
         exact: true,
         render: () => <Redirect to={"/recommend"} />
       },
       {
         path: "/recommend",
         component: SuspenseComponent(Recommend)
+      },
+      {
+        path: "/hot",
+        exact: true,
+        component: SuspenseComponent(Hot)
+      },
+      {
+        path: "/search",
+        exact: true,
+        component: SuspenseComponent(Search)
       }
     ]
   }

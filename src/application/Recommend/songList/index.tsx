@@ -8,8 +8,8 @@ const SongList: React.FC<any> = props => {
   const { sheetSongs } = props
   const songNeed = (index: number) => {
     return {
-      rank: true,
-      red: true,
+      rank: false,
+      red: false,
       index: index
     }
   }

@@ -15,7 +15,7 @@ export const Rank = styled.div<rankStyle>`
   justify-content: center;
   align-items: center;
   margin-right: -10px;
-  color: ${props => (props.red && props.index < 3 ? "#df3436" : "#999")};
+  color: ${props => (props.red && props.index <= 3 ? "#df3436" : "#999")};
 `
 
 export const ContentWrapper = styled.div`

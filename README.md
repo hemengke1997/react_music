@@ -1126,3 +1126,9 @@ background-image: url(${xxxx});
 
 
 
+##### 18. ts使用useRef
+
+```tsx
+const inputEl = useRef<HTMLInputElement | null>(null)
+```
+

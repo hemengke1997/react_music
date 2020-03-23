@@ -10,9 +10,32 @@ import {
   RightPart
 } from "./style"
 import { withRouter } from "react-router-dom"
+import { RouteConfig } from "react-router-config"
 
-const Song: React.FC<any> = props => {
-  const { rank, songNeed, song:item, keyword, highlight } = props
+export interface songNeedType {
+  rank: boolean
+  red: boolean
+  index: number
+}
+export interface songType {
+  name: string
+  id: number
+  song: {
+    alias: any[]
+    artists: any[]
+    album: {
+      name: string
+    }
+  }
+}
+interface SongProps extends RouteConfig {
+  songNeed: songNeedType
+  song: songType
+  keyword?: string
+  highlight?: boolean
+}
+const Song: React.FC<any> = (props: SongProps) => {
+  const { songNeed, song: item, keyword, highlight } = props
   // 处理歌手名拼接
   interface artist {
     name: string
@@ -38,20 +61,24 @@ const Song: React.FC<any> = props => {
       return ""
     } else if (!highlight || keyword === "") {
       return name
-    }
-    const index = name.indexOf(keyword)
-    if (index !== -1) {
-      let reg = new RegExp(keyword, "g")
-      
-      return name.replace(reg, `<span class="highlight">${keyword}</span>`)
-    } else {
-      return name
+    } else if (keyword) {
+      const index = name.indexOf(keyword)
+      if (index !== -1) {
+        let reg = new RegExp(keyword, "g")
+        return name.replace(reg, `<span class="highlight">${keyword}</span>`)
+      } else {
+        return name
+      }
     }
   }
 
   return (
     <SongWrapper>
-      {rank && <Rank red={songNeed.red} index={songNeed.index}></Rank>}
+      {songNeed.rank && (
+        <Rank red={songNeed.red} index={songNeed.index}>
+          {songNeed.index < 10 ? `0${songNeed.index}` : songNeed.index}
+        </Rank>
+      )}
       <ContentWrapper>
         <LeftPart>
           <SongTitle>
